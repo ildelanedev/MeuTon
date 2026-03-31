@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>MeuTon Clínico</title>
+
+    <!-- PWA: aparece como app ao "Adicionar à tela de início" -->
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="MeuTon">
+    <meta name="theme-color" content="#4CAF50">
+    <link rel="manifest" href="manifest.json">
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <style>
+        :root { --primary: #4CAF50; --secondary: #00BFA5; --bg: #f0f4f3; --text: #2c3e50; }
+        * { box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: var(--bg); margin: 0; padding: 15px; display: flex; justify-content: center; color: var(--text); min-height: 100vh; }
+        .app-card { background: rgba(255,255,255,0.9); backdrop-filter: blur(10px); border-radius: 24px; padding: 20px; width: 100%; max-width: 400px; box-shadow: 0 10px 30px rgba(0,0,0,0.08); border: 1px solid rgba(255,255,255,0.4); height: fit-content; }
+        h1 { color: var(--primary); text-align: center; font-size: 1.6rem; margin: 0 0 20px; letter-spacing: -0.5px; }
+        .section { background: white; border-radius: 16px; padding: 15px; margin-bottom: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
+        label { display: block; font-size: 0.8rem; font-weight: 700; margin-bottom: 8px; color: #7f8c8d; text-transform: uppercase; letter-spacing: 0.5px; }
+        input, textarea, select { width: 100%; padding: 12px; border: 1.5px solid #e0e6e6; border-radius: 12px; font-size: 16px; outline: none; transition: border-color 0.2s; background: #fafafa; color: var(--text); }
+        input:focus, textarea:focus, select:focus { border-color: var(--primary); background: white; }
+        textarea { resize: vertical; font-family: inherit; }
+        .btn { background: linear-gradient(135deg, var(--primary), var(--secondary)); color: white; border: none; padding: 14px; width: 100%; border-radius: 14px; font-weight: 700; font-size: 16px; cursor: pointer; margin-top: 10px; transition: transform 0.15s, opacity 0.15s; box-shadow: 0 4px 15px rgba(76,175,80,0.25); }
+        .btn:active { transform: scale(0.97); opacity: 0.9; }
+        .btn-dark { background: linear-gradient(135deg, #34495e, #2c3e50); box-shadow: 0 4px 15px rgba(52,73,94,0.2); }
+        .btn-outline { background: white; color: var(--primary); border: 2px solid var(--primary); box-shadow: none; }
+        .status { text-align: center; font-size: 0.85rem; margin-top: 12px; padding: 10px; border-radius: 10px; font-weight: 600; display: none; }
+        .status.ok { background: #e8f5e9; color: #2e7d32; }
+        .status.erro { background: #fdecea; color: #c62828; }
+        .historico-item { padding: 10px 0; border-bottom: 1px solid #f0f0f0; font-size: 0.9rem; }
+        .historico-item:last-child { border-bottom: none; }
+        .historico-item strong { color: var(--primary); }
+        .badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; }
+        .badge-N { background: #fdecea; color: #c62828; }
+        .badge-P { background: #fff3e0; color: #e65100; }
+        .badge-M { background: #e8f5e9; color: #2e7d32; }
+        #lista_historico { max-height: 200px; overflow-y: auto; }
+        .empty-msg { text-align: center; color: #bdc3c7; font-size: 0.85rem; padding: 15px 0; }
+    </style>
+</head>
+<body>
+
+<div class="app-card">
+    <h1>🌱 MeuTon Clínico</h1>
+
+    <!-- PACIENTE -->
+    <div class="section">
+        <label>👤 Nome do Paciente</label>
+        <input type="text" id="pac_id" placeholder="Ex: Maria ou Katharina" autocomplete="off">
+    </div>
+
+    <!-- AVALIAÇÃO DEMUCA -->
+    <div class="section">
+        <label>📊 Avaliação DEMUCA</label>
+        <select id="res_demuca">
+            <option value="N">Não atingido (N)</option>
+            <option value="P">Parcial (P)</option>
+            <option value="M">Masterizado (M)</option>
+        </select>
+        <button class="btn" onclick="salvarAval()">💾 Salvar Avaliação</button>
+    </div>
+
+    <!-- PRONTUÁRIO -->
+    <div class="section">
+        <label>📝 Parecer Técnico / Evolução</label>
+        <textarea id="obs_clinica" rows="3" placeholder="Descreva a evolução do paciente..."></textarea>
+        <button class="btn btn-dark" onclick="salvarRel()">📋 Atualizar Prontuário</button>
+    </div>
+
+    <!-- HISTÓRICO -->
+    <div class="section">
+        <label>🕓 Histórico de Avaliações</label>
+        <input type="text" id="busca_pac" placeholder="Digite o nome para buscar..." oninput="buscarHistorico()" autocomplete="off">
+        <div id="lista_historico" style="margin-top: 12px;">
+            <p class="empty-msg">Digite um nome para ver o histórico</p>
+        </div>
+    </div>
+
+    <div id="status_msg" class="status"></div>
+</div>
+
+<script>
+    const URL_DB = 'https://uymtfwhjxvlwuacvonqr.supabase.co';
+    const KEY_DB = 'sb_publishable_kWdyvs-QoKzRfhr_jUWh3g_TCuHTeym';
+    const db = supabase.createClient(URL_DB, KEY_DB);
+
+    const msg = document.getElementById('status_msg');
+
+    function mostrarStatus(texto, tipo = 'ok') {
+        msg.textContent = tipo === 'ok' ? '✅ ' + texto : '❌ ' + texto;
+        msg.className = 'status ' + tipo;
+        msg.style.display = 'block';
+        setTimeout(() => { msg.style.display = 'none'; }, 3500);
+    }
+
+    async function salvarAval() {
+        const id = document.getElementById('pac_id').value.trim();
+        const resp = document.getElementById('res_demuca').value;
+        if (!id) { mostrarStatus("Digite o nome do paciente.", 'erro'); return; }
+
+        const { error } = await db.from('demuca_avaliacoes').insert([{ paciente_id: id, respostas: resp }]);
+        if (error) mostrarStatus("Erro: " + error.message, 'erro');
+        else mostrarStatus("Avaliação salva com sucesso!");
+    }
+
+    async function salvarRel() {
+        const id = document.getElementById('pac_id').value.trim();
+        const texto = document.getElementById('obs_clinica').value.trim();
+        if (!id) { mostrarStatus("Digite o nome do paciente.", 'erro'); return; }
+        if (!texto) { mostrarStatus("Escreva uma observação antes de salvar.", 'erro'); return; }
+
+        const { error } = await db.from('relatorios').upsert({ paciente_id: id, observacao: texto });
+        if (error) mostrarStatus("Erro: " + error.message, 'erro');
+        else {
+            mostrarStatus("Prontuário atualizado!");
+            document.getElementById('obs_clinica').value = "";
+        }
+    }
+
+    let buscaTimer;
+    function buscarHistorico() {
+        clearTimeout(buscaTimer);
+        buscaTimer = setTimeout(async () => {
+            const nome = document.getElementById('busca_pac').value.trim();
+            const lista = document.getElementById('lista_historico');
+            if (!nome) { lista.innerHTML = '<p class="empty-msg">Digite um nome para ver o histórico</p>'; return; }
+
+            lista.innerHTML = '<p class="empty-msg">Buscando...</p>';
+            const { data, error } = await db.from('demuca_avaliacoes')
+                .select('paciente_id, respostas, created_at')
+                .ilike('paciente_id', '%' + nome + '%')
+                .order('created_at', { ascending: false })
+                .limit(10);
+
+            if (error) { lista.innerHTML = '<p class="empty-msg">Erro ao buscar.</p>'; return; }
+            if (!data || data.length === 0) { lista.innerHTML = '<p class="empty-msg">Nenhum registro encontrado.</p>'; return; }
+
+            lista.innerHTML = data.map(item => {
+                const data_fmt = item.created_at
+                    ? new Date(item.created_at).toLocaleDateString('pt-BR', { day:'2-digit', month:'2-digit', year:'2-digit', hour:'2-digit', minute:'2-digit' })
+                    : '';
+                const labels = { N: 'Não atingido', P: 'Parcial', M: 'Masterizado' };
+                return `<div class="historico-item">
+                    <strong>${item.paciente_id}</strong>
+                    <span class="badge badge-${item.respostas}">${labels[item.respostas] || item.respostas}</span>
+                    <br><small style="color:#aaa">${data_fmt}</small>
+                </div>`;
+            }).join('');
+        }, 400);
+    }
+</script>
+
+</body>
+</html>

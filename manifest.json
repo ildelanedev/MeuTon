@@ -1,0 +1,21 @@
+{
+  "name": "MeuTon Clínico",
+  "short_name": "MeuTon",
+  "description": "App clínico para avaliações DEMUCA e prontuários",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#f0f4f3",
+  "theme_color": "#4CAF50",
+  "icons": [
+    {
+      "src": "https://via.placeholder.com/192x192/4CAF50/ffffff?text=MT",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "https://via.placeholder.com/512x512/4CAF50/ffffff?text=MT",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
