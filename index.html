@@ -1,245 +1,195 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>MeuTon Clínico</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+<title>MeuTon Clínico - Profissional</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.js"></script>
 
-    <meta name="mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="default">
-    <meta name="theme-color" content="#4CAF50">
-    <link rel="manifest" href="manifest.json">
+<style>
+    :root {
+        --navy: #1a3a6b; --blue: #2d7ab8; --sky: #e8f4fd;
+        --mint: #3db890; --text: #1a2a4a; --white: #ffffff;
+    }
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    body { font-family: 'Nunito', sans-serif; background: #f0f4f8; margin: 0; color: var(--text); }
 
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.js"></script>
+    /* TELAS */
+    .screen { display: none; padding: 15px; max-width: 500px; margin: auto; }
+    .active { display: block; }
 
-    <style>
-        :root { --primary: #4CAF50; --secondary: #00BFA5; --bg: #f0f4f3; --text: #2c3e50; }
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        
-        body { 
-            font-family: 'Segoe UI', Roboto, system-ui, sans-serif; 
-            background-color: var(--bg); 
-            margin: 0; 
-            padding: 15px; 
-            display: flex; 
-            justify-content: center; 
-            color: var(--text); 
-            min-height: 100vh; 
-        }
+    /* HEADER */
+    .header { background: var(--navy); color: white; padding: 20px; text-align: center; border-radius: 0 0 25px 25px; margin-bottom: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+    .header h1 { margin: 0; font-size: 1.5rem; font-weight: 900; }
 
-        .app-card { 
-            background: rgba(255,255,255,0.95); 
-            backdrop-filter: blur(10px); 
-            border-radius: 24px; 
-            padding: 20px; 
-            width: 100%; 
-            max-width: 400px; 
-            box-shadow: 0 10px 30px rgba(0,0,0,0.08); 
-            border: 1px solid rgba(255,255,255,0.4); 
-            height: fit-content; 
-        }
+    /* CARDS */
+    .card { background: var(--white); border-radius: 20px; padding: 20px; margin-bottom: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); border: 1px solid #eef2f6; }
+    h2 { font-size: 1.1rem; color: var(--navy); margin-top: 0; border-bottom: 2px solid var(--sky); padding-bottom: 8px; }
 
-        h1 { color: var(--primary); text-align: center; font-size: 1.6rem; margin: 0 0 20px; letter-spacing: -0.5px; }
-        
-        .section { 
-            background: white; 
-            border-radius: 16px; 
-            padding: 15px; 
-            margin-bottom: 15px; 
-            box-shadow: 0 2px 8px rgba(0,0,0,0.04); 
-            border: 1px solid #f0f0f0;
-        }
+    /* INPUTS E SELECTS */
+    label { display: block; font-weight: 700; margin-bottom: 8px; font-size: 0.9rem; color: var(--blue); }
+    input, select, textarea { width: 100%; padding: 12px; border-radius: 12px; border: 1.5px solid #dce4ec; margin-bottom: 15px; font-family: inherit; font-size: 1rem; }
 
-        label { 
-            display: block; 
-            font-size: 0.75rem; 
-            font-weight: 700; 
-            margin-bottom: 8px; 
-            color: #7f8c8d; 
-            text-transform: uppercase; 
-            letter-spacing: 0.5px; 
-        }
+    /* BOTÕES */
+    .btn { background: var(--navy); color: white; border: none; padding: 15px; width: 100%; border-radius: 15px; font-weight: 700; font-size: 1rem; cursor: pointer; transition: 0.2s; display: flex; align-items: center; justify-content: center; gap: 10px; }
+    .btn-mint { background: var(--mint); }
+    .btn-outline { background: none; border: 2px solid var(--navy); color: var(--navy); }
+    .btn:active { transform: scale(0.98); }
 
-        input, textarea, select { 
-            width: 100%; 
-            padding: 12px; 
-            border: 1.5px solid #e0e6e6; 
-            border-radius: 12px; 
-            font-size: 16px; 
-            outline: none; 
-            background: #fafafa; 
-            color: var(--text); 
-            transition: all 0.2s;
-        }
+    /* LISTA DE PACIENTES */
+    .pt-item { background: white; padding: 15px; border-radius: 15px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; border-left: 5px solid var(--mint); cursor: pointer; }
+    .pt-info { font-weight: 700; }
+    .pt-date { font-size: 0.8rem; color: #888; }
 
-        input:focus, textarea:focus, select:focus { border-color: var(--primary); background: white; }
-
-        .btn { 
-            background: linear-gradient(135deg, var(--primary), var(--secondary)); 
-            color: white; 
-            border: none; 
-            padding: 14px; 
-            width: 100%; 
-            border-radius: 14px; 
-            font-weight: 700; 
-            font-size: 16px; 
-            cursor: pointer; 
-            margin-top: 10px; 
-            box-shadow: 0 4px 15px rgba(76,175,80,0.2); 
-        }
-
-        .btn:active { transform: scale(0.97); opacity: 0.9; }
-        .btn-dark { background: linear-gradient(135deg, #34495e, #2c3e50); }
-
-        .status { 
-            text-align: center; 
-            font-size: 0.85rem; 
-            margin-top: 12px; 
-            padding: 10px; 
-            border-radius: 10px; 
-            font-weight: 600; 
-            display: none; 
-        }
-        .status.ok { background: #e8f5e9; color: #2e7d32; }
-        .status.erro { background: #fdecea; color: #c62828; }
-
-        .historico-item { padding: 10px 0; border-bottom: 1px solid #f0f0f0; font-size: 0.9rem; }
-        .badge { float: right; padding: 3px 10px; border-radius: 20px; font-size: 0.7rem; font-weight: 800; }
-        .badge-N { background: #fdecea; color: #c62828; }
-        .badge-P { background: #fff3e0; color: #e65100; }
-        .badge-M { background: #e8f5e9; color: #2e7d32; }
-
-        #lista_historico { max-height: 250px; overflow-y: auto; margin-top: 10px; }
-        .empty-msg { text-align: center; color: #bdc3c7; font-size: 0.85rem; padding: 15px 0; }
-    </style>
+    /* ESTILO DEMUCA (O que você gostou) */
+    .demuca-grid { display: grid; grid-template-columns: 1fr auto; gap: 10px; align-items: center; margin-bottom: 10px; padding: 8px; background: var(--sky); border-radius: 10px; }
+    .demuca-label { font-size: 0.9rem; font-weight: 600; }
+    .demuca-sel { width: 70px; margin-bottom: 0; padding: 5px; }
+</style>
 </head>
 <body>
 
-<div class="app-card">
+<div class="header">
     <h1>🌱 MeuTon Clínico</h1>
+</div>
 
-    <div class="section">
-        <label>👤 Nome do Paciente</label>
-        <input type="text" id="pac_id" placeholder="Ex: Maria ou Katharina" autocomplete="off">
+<div id="screen-list" class="screen active">
+    <button class="btn btn-mint" onclick="openNew()">+ Novo Paciente / Avaliação</button>
+    <h2 style="margin-top:25px;">Histórico de Atendimentos</h2>
+    <div id="patient-list">
+        <p style="text-align:center;color:#999;">Carregando...</p>
+    </div>
+</div>
+
+<div id="screen-form" class="screen">
+    <button class="btn btn-outline" style="width:auto; padding:8px 15px; margin-bottom:15px;" onclick="nav('screen-list')">⬅ Voltar</button>
+    
+    <div class="card">
+        <h2>Identificação</h2>
+        <label>Nome do Paciente</label>
+        <input type="text" id="pac_nome" placeholder="Ex: Maria Katharina">
     </div>
 
-    <div class="section">
-        <label>📊 Avaliação DEMUCA</label>
-        <select id="res_demuca">
-            <option value="N">Não atingido (N)</option>
-            <option value="P">Parcial (P)</option>
-            <option value="M">Masterizado (M)</option>
-        </select>
-        <button class="btn" onclick="salvarAval()">💾 Salvar Avaliação</button>
-    </div>
-
-    <div class="section">
-        <label>📝 Parecer / Evolução</label>
-        <textarea id="obs_clinica" rows="3" placeholder="Notas da sessão..."></textarea>
-        <button class="btn btn-dark" onclick="salvarRel()">📋 Atualizar Prontuário</button>
-    </div>
-
-    <div class="section">
-        <label>🕓 Histórico</label>
-        <input type="text" id="busca_pac" placeholder="Buscar histórico..." oninput="buscarHistorico()" autocomplete="off">
-        <div id="lista_historico">
-            <p class="empty-msg">Inicie a busca pelo nome</p>
+    <div class="card">
+        <h2>Escala DEMUCA</h2>
+        
+        <div class="demuca-grid">
+            <span class="demuca-label">Contato Visual</span>
+            <select class="d-val" data-item="Contato Visual"><option value="N">N</option><option value="P">P</option><option value="M">M</option></select>
+        </div>
+        <div class="demuca-grid">
+            <span class="demuca-label">Resposta ao Nome</span>
+            <select class="d-val" data-item="Resposta ao Nome"><option value="N">N</option><option value="P">P</option><option value="M">M</option></select>
+        </div>
+        <div class="demuca-grid">
+            <span class="demuca-label">Engajamento Social</span>
+            <select class="d-val" data-item="Engajamento"><option value="N">N</option><option value="P">P</option><option value="M">M</option></select>
+        </div>
+        <div class="demuca-grid">
+            <span class="demuca-label">Imitação Motora</span>
+            <select class="d-val" data-item="Imitação"><option value="N">N</option><option value="P">P</option><option value="M">M</option></select>
+        </div>
+        <div class="demuca-grid">
+            <span class="demuca-label">Expressão Emocional</span>
+            <select class="d-val" data-item="Emoção"><option value="N">N</option><option value="P">P</option><option value="M">M</option></select>
         </div>
     </div>
 
-    <div id="status_msg" class="status"></div>
+    <div class="card">
+        <h2>Parecer Clínico</h2>
+        <textarea id="pac_obs" rows="4" placeholder="Descreva a evolução do paciente nesta sessão..."></textarea>
+    </div>
+
+    <button class="btn btn-mint" onclick="saveData()">💾 Salvar Atendimento</button>
+    <div style="height:50px;"></div>
 </div>
 
 <script>
-    // INICIALIZAÇÃO SEGURA DO SUPABASE
-    const URL_DB = 'https://uymtfwhjxvlwuacvonqr.supabase.co';
-    const KEY_DB = 'sb_publishable_kWdyvs-QoKzRfhr_jUWh3g_TCuHTeym';
-    
-    // Usando window.supabase para garantir compatibilidade com navegador
-    const _supabase = window.supabase.createClient(URL_DB, KEY_DB);
+    // CONFIG SUPABASE
+    const URL = 'https://uymtfwhjxvlwuacvonqr.supabase.co';
+    const KEY = 'sb_publishable_kWdyvs-QoKzRfhr_jUWh3g_TCuHTeym';
+    const supabase = window.supabase.createClient(URL, KEY);
 
-    const msgElement = document.getElementById('status_msg');
-
-    function mostrarStatus(texto, tipo = 'ok') {
-        msgElement.textContent = (tipo === 'ok' ? '✅ ' : '❌ ') + texto;
-        msgElement.className = 'status ' + tipo;
-        msgElement.style.display = 'block';
-        setTimeout(() => { msgElement.style.display = 'none'; }, 3500);
+    // NAVEGAÇÃO
+    function nav(id) {
+        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+        document.getElementById(id).classList.add('active');
+        if(id === 'screen-list') loadPatients();
+        window.scrollTo(0,0);
     }
 
-    async function salvarAval() {
-        const id = document.getElementById('pac_id').value.trim();
-        const resp = document.getElementById('res_demuca').value;
-        if (!id) return mostrarStatus("Digite o nome do paciente.", 'erro');
+    function openNew() {
+        document.getElementById('pac_nome').value = '';
+        document.getElementById('pac_obs').value = '';
+        nav('screen-form');
+    }
 
-        const { error } = await _supabase.from('demuca_avaliacoes').insert([{ paciente_id: id, respostas: resp }]);
-        if (error) {
-            console.error(error);
-            mostrarStatus("Erro ao salvar. Verifique o RLS.", 'erro');
+    // SALVAR NO BANCO
+    async function saveData() {
+        const nome = document.getElementById('pac_nome').value.trim();
+        const obs = document.getElementById('pac_obs').value.trim();
+        
+        if(!nome) { alert("Informe o nome do paciente!"); return; }
+
+        // Coleta os dados da DEMUCA
+        let demucaResult = "";
+        document.querySelectorAll('.d-val').forEach(sel => {
+            demucaResult += `${sel.dataset.item}: ${sel.value} | `;
+        });
+
+        // 1. Salva na tabela de avaliações
+        const { error: err1 } = await supabase.from('demuca_avaliacoes').insert([{ 
+            paciente_id: nome, 
+            respostas: demucaResult 
+        }]);
+
+        // 2. Salva na tabela de relatórios
+        const { error: err2 } = await supabase.from('relatorios').upsert({ 
+            paciente_id: nome, 
+            observacao: obs 
+        });
+
+        if(err1 || err2) {
+            alert("Erro ao salvar! Verifique as Policies no Supabase.");
         } else {
-            mostrarStatus("Avaliação salva!");
-            buscarHistorico(); // Atualiza a lista se estiver buscando
+            alert("Atendimento salvo com sucesso!");
+            nav('screen-list');
         }
     }
 
-    async function salvarRel() {
-        const id = document.getElementById('pac_id').value.trim();
-        const texto = document.getElementById('obs_clinica').value.trim();
-        if (!id || !texto) return mostrarStatus("Preencha nome e observação.", 'erro');
+    // CARREGAR LISTA
+    async function loadPatients() {
+        const listDiv = document.getElementById('patient-list');
+        const { data, error } = await supabase.from('demuca_avaliacoes')
+            .select('paciente_id, created_at')
+            .order('created_at', { ascending: false });
 
-        // Upsert precisa de uma coluna única (paciente_id) configurada no Supabase como UNIQUE
-        const { error } = await _supabase.from('relatorios').upsert({ paciente_id: id, observacao: texto });
-        if (error) {
-            console.error(error);
-            mostrarStatus("Erro ao atualizar prontuário.", 'erro');
+        if(data && data.length > 0) {
+            // Unificar por nome para não repetir na lista
+            const seen = new Set();
+            listDiv.innerHTML = data.filter(i => {
+                const duplicate = seen.has(i.paciente_id);
+                seen.add(i.paciente_id);
+                return !duplicate;
+            }).map(i => `
+                <div class="pt-item" onclick="openPatient('${i.paciente_id}')">
+                    <div class="pt-info">${i.paciente_id}</div>
+                    <div class="pt-date">${new Date(i.created_at).toLocaleDateString()} ➜</div>
+                </div>
+            `).join('');
         } else {
-            mostrarStatus("Prontuário atualizado!");
-            document.getElementById('obs_clinica').value = "";
+            listDiv.innerHTML = '<p style="text-align:center;color:#999;">Nenhum registro encontrado.</p>';
         }
     }
 
-    let buscaTimer;
-    function buscarHistorico() {
-        clearTimeout(buscaTimer);
-        const nome = document.getElementById('busca_pac').value.trim();
-        const lista = document.getElementById('lista_historico');
-
-        if (!nome) { 
-            lista.innerHTML = '<p class="empty-msg">Inicie a busca pelo nome</p>'; 
-            return; 
-        }
-
-        buscaTimer = setTimeout(async () => {
-            const { data, error } = await _supabase.from('demuca_avaliacoes')
-                .select('paciente_id, respostas, created_at')
-                .ilike('paciente_id', `%${nome}%`)
-                .order('created_at', { ascending: false })
-                .limit(10);
-
-            if (error) {
-                lista.innerHTML = '<p class="empty-msg">Erro na busca.</p>';
-                return;
-            }
-
-            if (!data || data.length === 0) {
-                lista.innerHTML = '<p class="empty-msg">Nada encontrado.</p>';
-                return;
-            }
-
-            lista.innerHTML = data.map(item => {
-                const data_fmt = new Date(item.created_at).toLocaleDateString('pt-BR', { day:'2-digit', month:'2-digit' });
-                const labels = { N: 'N', P: 'P', M: 'M' };
-                return `
-                <div class="historico-item">
-                    <strong>${item.paciente_id}</strong>
-                    <span class="badge badge-${item.respostas}">${labels[item.respostas]}</span>
-                    <br><small style="color:#aaa">${data_fmt}</small>
-                </div>`;
-            }).join('');
-        }, 500);
+    function openPatient(nome) {
+        document.getElementById('pac_nome').value = nome;
+        nav('screen-form');
     }
+
+    // INICIAR
+    loadPatients();
 </script>
-
 </body>
 </html>
